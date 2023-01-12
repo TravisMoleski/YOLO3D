@@ -1,0 +1,2 @@
+python inference.py --weights yolov5s.pt  --source eval/van --device 0 --reg_weights weights/resnet18.pkl  --model_select resnet18 --show_result
+# python inference.py --weights yolov5s.pt  --source eval/image_2  --reg_weights weights/resnet18.pkl  --model_select resnet18  --show_result

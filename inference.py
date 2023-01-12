@@ -80,6 +80,7 @@ def detect3d(
 
     # loop images
     for i, img_path in enumerate(imgs_path):
+        # print(img_path)
         # read image
         img = cv2.imread(img_path)
         
@@ -130,6 +131,7 @@ def detect3d(
             plot3d(img, proj_matrix, box_2d, dim, alpha, theta_ray)
 
         if show_result:
+            img = cv2.resize(img, [640,480], interpolation = cv2.INTER_AREA)
             cv2.imshow('3d detection', img)
             cv2.waitKey(0)
 
@@ -139,6 +141,7 @@ def detect3d(
             except:
                 pass
             cv2.imwrite(f'{output_path}/{i:03d}.png', img)
+
 
 @torch.no_grad()
 def detect2d(
