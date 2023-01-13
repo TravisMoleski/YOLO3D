@@ -88,10 +88,14 @@ def detect3d(
     # print("GRABBING VIDEO...", './'+source)
     videoCapture = cv2.VideoCapture('./'+source)
 
+    device = select_device(0)
+    model = DetectMultiBackend('yolov5s.pt', device=device, dnn=False, data='data/coco128.yaml')
+    model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
+
     # loop images
     # for i, img_path in enumerate(imgs_path):
     while videoCapture.isOpened():
-        # tstart = time.now()
+        tstart = time.time()
         # print("MAIN...")
         # print(img_path)
         # read image
@@ -99,6 +103,7 @@ def detect3d(
         ret, img = videoCapture.read()
         
         # Run detection 2d
+        detected2dStart = time.time()
         dets = detect2d(
             weights='yolov5s.pt',
             source=source,
@@ -106,8 +111,11 @@ def detect3d(
             data='data/coco128.yaml',
             imgsz=imgsz,
             device=0,
-            classes=[0, 1, 2, 3, 4, 5]
+            classes=[0, 1, 2, 3, 4, 5], 
+            model=model
         )
+        # print("DETECT 2D TIME...", (time.time()-detected2dStart))
+
 
         for det in dets:
             if not averages.recognized_class(det.detected_class):
@@ -145,10 +153,14 @@ def detect3d(
             # plot 3d detection
             plot3d(img, proj_matrix, box_2d, dim, alpha, theta_ray)
 
+        
         if show_result:
             img = cv2.resize(img, [640,480], interpolation = cv2.INTER_AREA)
             cv2.imshow('3d detection', img)
             cv2.waitKey(1)
+
+        # time.sleep(1/100)
+        print("Rate:", 1/(time.time()-tstart))
 
         # if save_result and output_path is not None:
         #     try:
@@ -166,7 +178,8 @@ def detect2d(
     data,
     imgsz,
     device,
-    classes
+    classes,
+    model,
     ):
 
     # array for boundingbox detection
@@ -178,8 +191,12 @@ def detect2d(
     source = str(source)
 
     # Load model
-    device = select_device(device)
-    model = DetectMultiBackend(weights, device=device, dnn=False, data=data)
+    # device = select_device(device)
+    # model = DetectMultiBackend(weights, device=device, dnn=False, data=data)
+
+    # model.stride=64
+    # print("MODEL...", model)
+
     stride, names, pt, jit, onnx, engine = model.stride, model.names, model.pt, model.jit, model.onnx, model.engine
     imgsz = check_img_size(imgsz, s=stride)  # check image size
 
@@ -188,7 +205,7 @@ def detect2d(
     # dataset = LoadVideoFrame()
 
     # Run inference
-    model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
+    # model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
     dt, seen = [0.0, 0.0, 0.0], 0
     # im0s = cv2.flip(im, 1)  # flip left-right
 
@@ -215,9 +232,6 @@ def detect2d(
     pred = model(im, augment=False, visualize=False)
     t3 = time_sync()
     dt[1] += t3 - t2
-
-    print("DT1")
-
     # NMS
     pred = non_max_suppression(prediction=pred, classes=classes)
     dt[2] += time_sync() - t3
@@ -229,14 +243,14 @@ def detect2d(
     # s = '0'
     for i, det in enumerate(pred):  # per image
         seen += 1
-        p, im0 = source, im0s.copy()
+        # p, im0 = source, im0s
 
-        p = Path(p)  # to Path
+        # p = Path(p)  # to Path
         # s += '%gx%g ' % im.shape[2:]  # print string
 
         if len(det):
             # Rescale boxes from img_size to im0 size
-            det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
+            det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0s.shape).round()
 
             # Print results
             # for c in det[:, -1].unique():
@@ -258,8 +272,8 @@ def detect2d(
         # LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
     # Print results
-    t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
-    LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}' % t)
+    # t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
+    # LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}' % t)
 
     return bbox_list
 
