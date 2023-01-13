@@ -1,2 +1,4 @@
-python inference.py --weights yolov5s.pt  --source eval/van --device 0 --reg_weights weights/resnet18.pkl  --model_select resnet18 --show_result
-# python inference.py --weights yolov5s.pt  --source eval/image_2  --reg_weights weights/resnet18.pkl  --model_select resnet18  --show_result
+# python inference.py --weights yolov5s.pt  --source eval/vanLeftLeo --device 0 --reg_weights weights/resnet18.pkl  --model_select resnet18 --show_result --calib_file eval/camera_cal/front_6mm_intrinsics.yaml
+python liveRun.py --weights yolov5s.pt  --source video/leftLeo/uptown6mm.mp4 --device 0 --reg_weights weights/resnet18.pkl  --model_select resnet18 --show_result --calib_file eval/camera_cal/front_6mm_intrinsics.yaml --imgsz 800
+
+# python liveRun.py --weights yolov5s.pt  --source trimmed_video/leftLeo.avi --device 0 --reg_weights weights/resnet18.pkl  --model_select resnet18 --show_result --calib_file eval/camera_cal/front_6mm_intrinsics.yaml

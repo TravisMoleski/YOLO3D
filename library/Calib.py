@@ -3,6 +3,7 @@ Script for handling calibration file
 """
 
 import numpy as np
+import yaml
 
 def get_P(calib_file):
     """
@@ -15,7 +16,22 @@ def get_P(calib_file):
             cam_P = np.asarray([float(cam_P) for cam_P in cam_P[1:]])
             matrix = np.zeros((3, 4))
             matrix = cam_P.reshape((3, 4))
+            print(matrix)
             return matrix
+
+def get_projection(calib_file):
+    with open(calib_file, 'r') as file:
+        camera_info = yaml.safe_load(file)
+    # print(camera_info['P'])
+    # matrix = np.zeros((3, 4))
+    matrix = camera_info['P']
+    matrix = [
+              [matrix[0], matrix[1],  matrix[2], matrix[3]], 
+              [matrix[4], matrix[5],  matrix[6], matrix[7]], 
+              [matrix[8], matrix[9],  matrix[10],  matrix[11]]
+            ]
+    return matrix
+
 
 # TODO: understand this
 

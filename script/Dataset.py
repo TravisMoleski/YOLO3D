@@ -13,7 +13,7 @@ from torchvision import transforms
 from torch.utils import data
 
 # library
-from library.Calib import get_P
+from library.Calib import get_P, get_projection
 
 from .ClassAverages import ClassAverages
 
@@ -44,7 +44,8 @@ class Dataset(data.Dataset):
         # using global calib file
         self.global_calib = path + '/calib_cam_to_cam.txt'
 
-        self.proj_matrix = get_P(self.global_calib)
+        # self.proj_matrix = get_P(self.global_calib)
+        self.proj_matrix = get_projection(self.global_calib)
 
         # get index of image_2 files
         self.ids = [x.split('.')[0] for x in sorted(os.listdir(self.top_calib_path))]
@@ -210,7 +211,9 @@ class DetectedObject:
 
         # check if proj_matrix is path
         if isinstance(proj_matrix, str):
-            proj_matrix = get_P(proj_matrix)
+            # proj_matrix = get_P(proj_matrix)
+
+            proj_matrix = get_projection(proj_matrix)
 
         self.proj_matrix = proj_matrix
         self.theta_ray = self.calc_theta_ray(img, box_2d, proj_matrix)
