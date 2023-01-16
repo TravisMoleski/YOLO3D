@@ -92,8 +92,16 @@ def detect3d(
     model = DetectMultiBackend('yolov5s.pt', device=device, dnn=False, data='data/coco128.yaml')
     model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
 
+    if save_result and output_path is not None:
+        for f in os.listdir(output_path):
+            os.remove(os.path.join(output_path, f))
+        
+
+    # rostopic = 
+
     # loop images
-    # for i, img_path in enumerate(imgs_path):
+    # for i, img_path in enumerate(imgs_path):+
+    i = 0
     while videoCapture.isOpened():
         tstart = time.time()
         # print("MAIN...")
@@ -162,12 +170,14 @@ def detect3d(
         # time.sleep(1/100)
         print("Rate:", 1/(time.time()-tstart))
 
-        # if save_result and output_path is not None:
-        #     try:
-        #         os.mkdir(output_path)
-        #     except:
-        #         pass
-        #     cv2.imwrite(f'{output_path}/{i:03d}.png', img)
+        if save_result and output_path is not None:
+            try:
+                os.mkdir(output_path)
+            except:
+                pass
+            cv2.imwrite(f'{output_path}/{i}.png', img)
+
+        i += 1
 
 
 @torch.no_grad()
