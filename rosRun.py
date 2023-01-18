@@ -66,6 +66,8 @@ class image_handler(object):
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber(topic, Image, self.callback, )
 
+        self.image_pub = rospy.Publisher(topic+'YOLO3D',Image, queue_size=1)
+
     def callback(self,data):
         try:
             self.cv_image = self.bridge.imgmsg_to_cv2(data,desired_encoding= "bgr8")
@@ -79,6 +81,7 @@ def detect3d(
     source,
     calib_file,
     show_result,
+    classes,
     save_result,
     output_path,
     imgsz
@@ -133,10 +136,10 @@ def detect3d(
             weights='yolov5s.pt',
             source=source,
             im=img,
-            data='data/coco128.yaml',
+            data='data/coco.yaml',
             imgsz=imgsz,
             device=0,
-            classes=[0, 1, 2, 3, 4, 5], 
+            classes=classes, 
             model=model
         )
         # print("DETECT 2D TIME...", (time.time()-detected2dStart))
@@ -178,6 +181,9 @@ def detect3d(
             # plot 3d detection
             plot3d(img, proj_matrix, box_2d, dim, alpha, theta_ray)
 
+        
+        # PUBLISH:
+        image_manager.image_pub.publish(image_manager.bridge.cv2_to_imgmsg(img))
         
         if show_result:
             img = cv2.resize(img, [640,480], interpolation = cv2.INTER_AREA)
@@ -331,7 +337,7 @@ def parse_opt():
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--classes', default=[0, 1, 2, 3, 4, 5], nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
+    parser.add_argument('--classes', default=np.arange(0,79, 1), nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
     parser.add_argument('--reg_weights', type=str, default='weights/epoch_10.pkl', help='Regressor model weights')
     parser.add_argument('--model_select', type=str, default='resnet', help='Regressor model list: resnet, vgg, eff')
     parser.add_argument('--calib_file', type=str, default=ROOT / 'eval/camera_cal/calib_cam_to_cam.txt', help='Calibration file or path')
@@ -350,6 +356,7 @@ def main(opt):
         model_select=opt.model_select,
         source=opt.source,
         calib_file=opt.calib_file,
+        classes=opt.classes,
         show_result=opt.show_result,
         save_result=opt.save_result,
         output_path=opt.output_path,

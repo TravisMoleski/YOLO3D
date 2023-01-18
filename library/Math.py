@@ -135,9 +135,9 @@ def calc_location(dimension, proj_matrix, box_2d, alpha, theta_ray):
     for i in range(0,4):
         pre_M[i][i] = 1
 
-    best_loc = None
+    best_loc   = None
     best_error = [1e09]
-    best_X = None
+    best_X     = None
 
     # loop through each possible constraint, hold on to the best guess
     # constraint will be 64 sets of 4 corners
@@ -180,13 +180,15 @@ def calc_location(dimension, proj_matrix, box_2d, alpha, theta_ray):
         # solve here with least squares, since over fit will get some error
         loc, error, rank, s = np.linalg.lstsq(A, b, rcond=None)
 
-        # found a better estimation
+        # found a better estimate
         if error < best_error:
             count += 1 # for debugging
             best_loc = loc
             best_error = error
             best_X = X_array
 
+
     # return best_loc, [left_constraints, right_constraints] # for debugging
+    
     best_loc = [best_loc[0][0], best_loc[1][0], best_loc[2][0]]
     return best_loc, best_X

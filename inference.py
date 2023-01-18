@@ -85,6 +85,7 @@ def detect3d(
         img = cv2.imread(img_path)
         
         # Run detection 2d
+        detected2dStart = time.time()
         dets = detect2d(
             weights='yolov5s.pt',
             source=img_path,
@@ -93,6 +94,7 @@ def detect3d(
             device=0,
             classes=[0, 2, 3, 5]
         )
+        print("DETECT 2D TIME...", time.time()-detected2dStart)
 
         for det in dets:
             if not averages.recognized_class(det.detected_class):

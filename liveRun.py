@@ -60,6 +60,7 @@ def detect3d(
     model_select,
     source,
     calib_file,
+    classes,
     show_result,
     save_result,
     output_path,
@@ -89,7 +90,7 @@ def detect3d(
     videoCapture = cv2.VideoCapture('./'+source)
 
     device = select_device(0)
-    model = DetectMultiBackend('yolov5s.pt', device=device, dnn=False, data='data/coco128.yaml')
+    model = DetectMultiBackend('yolov5s.pt', device=device, dnn=False, data='data/coco.yaml')
     model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
 
     if save_result and output_path is not None:
@@ -116,10 +117,10 @@ def detect3d(
             weights='yolov5s.pt',
             source=source,
             im=img,
-            data='data/coco128.yaml',
+            data='data/coco.yaml',
             imgsz=imgsz,
             device=0,
-            classes=[0, 1, 2, 3, 4, 5], 
+            classes=classes, 
             model=model
         )
         # print("DETECT 2D TIME...", (time.time()-detected2dStart))
@@ -138,6 +139,8 @@ def detect3d(
             proj_matrix = detectedObject.proj_matrix
             box_2d = det.box_2d
             detected_class = det.detected_class
+
+            # print(det.detected_class)
 
             input_tensor = torch.zeros([1,3,224,224]).cuda()
             input_tensor[0,:,:,:] = input_img
@@ -163,12 +166,12 @@ def detect3d(
 
         
         if show_result:
-            img = cv2.resize(img, [640,480], interpolation = cv2.INTER_AREA)
-            cv2.imshow('3d detection', img)
+            imgResize = cv2.resize(img, [640,480], interpolation = cv2.INTER_AREA)
+            cv2.imshow('3d detection', imgResize)
             cv2.waitKey(1)
 
         # time.sleep(1/100)
-        print("Rate:", 1/(time.time()-tstart))
+        # print("Rate:", 1/(time.time()-tstart))
 
         if save_result and output_path is not None:
             try:
@@ -316,7 +319,7 @@ def parse_opt():
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--classes', default=[0, 1, 2, 3, 4, 5], nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
+    parser.add_argument('--classes', default=np.arange(0,79, 1), nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
     parser.add_argument('--reg_weights', type=str, default='weights/epoch_10.pkl', help='Regressor model weights')
     parser.add_argument('--model_select', type=str, default='resnet', help='Regressor model list: resnet, vgg, eff')
     parser.add_argument('--calib_file', type=str, default=ROOT / 'eval/camera_cal/calib_cam_to_cam.txt', help='Calibration file or path')
@@ -335,6 +338,7 @@ def main(opt):
         model_select=opt.model_select,
         source=opt.source,
         calib_file=opt.calib_file,
+        classes=opt.classes,
         show_result=opt.show_result,
         save_result=opt.save_result,
         output_path=opt.output_path,
